@@ -41,7 +41,6 @@
 
 		
 		this._init = function() {
-			console.log('running init');
 
 			// cache the number of items
 			params.count = self.items.length;
@@ -70,6 +69,9 @@
 
 			// attach our scrolling event listener
 			self.container.addEventListener('scroll', _scroll, false);
+
+			// fill 'er up
+			self._scroll();
 		};
 
 
@@ -86,7 +88,7 @@
 
 		// add items to our container
 		this._display = function(range) {
-			console.log('display', range.toString());
+			// console.log('display', range.toString());
 
 			for (var i = range[1] - 1; i >= range[0]; i--) {
 				// skip the items that are already there
