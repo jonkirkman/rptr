@@ -24,12 +24,11 @@
 			self.renderer  = renderer;
 			self.canvas    = document.createElement('div');
 			self.buffer    = [];
-			self.visible   = [];
 			self.old_range = [];
 
 
 		// this will hold our current state
-		self.visible   = [];
+		self.visible   = {};
 
 
 		// we'll set these params during init
@@ -51,7 +50,7 @@
 			params.container_height = self.container.offsetHeight;
 
 			// how tall do we think our items should be?
-			params.item_height = 18;
+			params.item_height = 30;
 
 			// how many items can we fit in out container?
 			params.max_items = Math.floor(params.container_height / params. item_height);
@@ -87,7 +86,7 @@
 
 		// add items to our container
 		this._display = function(range) {
-			// console.log('display', range.toString());
+			console.log('display', range.toString());
 
 			for (var i = range[1] - 1; i >= range[0]; i--) {
 				// skip the items that are already there
@@ -95,6 +94,21 @@
 
 				// add our item
 				self._add_item(i);
+			}
+		};
+
+
+		// cleanup the view by removing items that are out of range
+		this._cleanup = function(range) {
+			// which items are currently visible?
+			var keys = Object.keys(self.visible);
+			// console.log('cleanup', range.toString(), keys.toString());
+
+			// run through the visible items and 
+			for (var i = keys.length -1; i >=0; i--) {
+				if (keys[i] < range[0] || keys[i] > range[1]) { 
+					self._remove_item(keys[i]);
+				}
 			}
 		};
 
@@ -119,29 +133,16 @@
 
 		// remove an item
 		this._remove_item = function(idx) {
-			if (typeof self.visible[idx] != 'undefined') return;
+			if (typeof self.visible[idx] == 'undefined') {
+				console.log('can not find item for removal:', idx, typeof self.visible[idx]);
+				return;
+			}
 
 			// remove the item from the DOM
 			self.canvas.removeChild(self.visible[idx]);
 
 			// delete the item from our visible group
 			delete self.visible[idx];
-		};
-
-
-		// cleanup the view by removing items that are out of range
-		this._cleanup = function(range) {
-			// console.log('cleanup', range.toString());
-			// which items are currently visible?
-			var keys = Object.keys(self.visible);
-
-			// run through the visible items and 
-			for (var i = keys.length -1; i >=0; i--) {
-				// 
-				if (keys[i] < range[0] || keys[i] > range[1]) {
-					self._remove_item(i);
-				}
-			}
 		};
 
 
@@ -157,9 +158,11 @@
 		// scrolls for lulz
 		this._scroll = function() {
 			var range = self._get_range();
-			// console.log(range);
+			// console.log('scrolling', range, self.old_range.toString() == range.toString());
+
 			if (self.old_range.toString() == range.toString()) return;
 			
+			self.old_range = range;
 			self._cleanup(range);
 			self._display(range);
 		};
