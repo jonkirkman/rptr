@@ -24,6 +24,8 @@
 			self.renderer  = renderer;
 			self.canvas    = document.createElement('div');
 			self.buffer    = [];
+			self.visible   = [];
+			self.old_range = [];
 
 
 		// this will hold our current state
@@ -49,7 +51,7 @@
 			params.container_height = self.container.offsetHeight;
 
 			// how tall do we think our items should be?
-			params.item_height = 14;
+			params.item_height = 18;
 
 			// how many items can we fit in out container?
 			params.max_items = Math.floor(params.container_height / params. item_height);
@@ -84,24 +86,82 @@
 
 
 		// add items to our container
-		this._display = function() {
+		this._display = function(range) {
+			// console.log('display', range.toString());
+
+			for (var i = range[1] - 1; i >= range[0]; i--) {
+				// skip the items that are already there
+				if (typeof self.visible[i] != 'undefined') continue;
+
+				// add our item
+				self._add_item(i);
+			}
+		};
+
+
+		// add an item
+		this._add_item = function(idx) {
+			// create a DOM node for our item
+			var single_item = document.createElement('div');
+			single_item.className = "rptr-single";
+			single_item.style.top = idx * params.item_height;
+
+			// shove our content into the DOM node
+			single_item.innerHTML = self.buffer[idx].el;
+			
+			// add the DOM node to our canvas
+			self.canvas.appendChild(single_item);
+
+			// We need to cache a reference to the new DOM node to remove it later
+			self.visible[idx] = single_item;
+		};
+
+
+		// remove an item
+		this._remove_item = function(idx) {
+			if (typeof self.visible[idx] != 'undefined') return;
+
+			// remove the item from the DOM
+			self.canvas.removeChild(self.visible[idx]);
+
+			// delete the item from our visible group
+			delete self.visible[idx];
+		};
+
+
+		// cleanup the view by removing items that are out of range
+		this._cleanup = function(range) {
+			// console.log('cleanup', range.toString());
+			// which items are currently visible?
+			var keys = Object.keys(self.visible);
+
+			// run through the visible items and 
+			for (var i = keys.length -1; i >=0; i--) {
+				// 
+				if (keys[i] < range[0] || keys[i] > range[1]) {
+					self._remove_item(i);
+				}
+			}
+		};
+
+
+		// return the 
+		this._get_range = function(position) {
 			var first = Math.max(0, Math.floor( (self.container.scrollTop / params.item_height) - Math.floor(params.max_items * 0.5) ));
 			var last  = first + params.max_items * 2;
-			console.log("scrollTop: ", self.container.scrollTop, "first:", first, "last:", last);
-
-			for (var i = last - 1; i >= first; i--) {
-				var single_item = document.createElement('div');
-				single_item.className = "rptr-single";
-				single_item.style.top = i * params.item_height;
-				single_item.innerHTML = self.buffer[i].el;
-				self.canvas.appendChild(single_item);
-			}
+			// console.log("scrollTop:", self.container.scrollTop, "first:", first, "last:", last);
+			return [first, last];
 		};
 
 
 		// scrolls for lulz
 		this._scroll = function() {
-			console.log('scrollity');
+			var range = self._get_range();
+			// console.log(range);
+			if (self.old_range.toString() == range.toString()) return;
+			
+			self._cleanup(range);
+			self._display(range);
 		};
 
 
@@ -109,6 +169,7 @@
 			// Public properties
 			params: params,
 			buffer: buffer,
+			visible: visible,
 
 			// Public methods
 			init: _init,
