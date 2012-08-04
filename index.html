@@ -1,6 +1,6 @@
 <html>
 <head>
-	<title>rptr helps repeat things</title>
+	<title>rptr.js helps repeat things</title>
 
 	<script src="rptr.js" type="text/javascript"></script>
 
@@ -9,10 +9,18 @@
 			font: 12px/18px Helvetica, Arial, sans-serif;
 			color: #555;
 		}
-		h1 {
+		h1,
+		h2,
+		h3 {
 			margin: 1.5em 0 1em;
+		}
+		h1 {
 			font-size: 36px;
 			color: #ff8200;
+		}
+		h2,
+		h3 {
+			font-weight: 200;
 		}
 		.wrapper {
 			width: 720px;
@@ -34,12 +42,18 @@
 			cursor: pointer;
 		}
 		.single-thing {
-			height: 28px;
-			line-height: 28px;
-			text-indent: 10px;
-			border-top: 1px solid #ccc;
-			border-bottom: 1px solid #fff;
-			background-color: #f2f2f2;
+			height: 38px;
+			line-height: 38px;
+			border-bottom: 2px solid #f2f2f2;
+		}
+		b {
+			display: inline-block;
+			width: 50px;
+			text-indent: 0;
+			overflow: hidden;
+			font-size: 1.2em;
+			text-align: center;
+			color: #ff8200;
 		}
 
 		/* 
@@ -53,7 +67,7 @@
 </head>
 <body>
 <div class="wrapper">
-	<h1>rptr</h1>
+	<h1>rptr.js</h1>
 	<h2>A logic-only repeatable list component aimed at efficiency.</h2>
 
 	<!-- This will contain our list -->
@@ -64,7 +78,7 @@
 	
 	<h3>Three parameters you need:</h3>
 	<ol>
-		<li><strong>Container</strong> A DOM element to hold </li>
+		<li><strong>Container</strong> A DOM element to hold your soon to be rendered items.</li>
 		<li><strong>Data</strong> An array of items you would like rendered. </li>
 		<li><strong>Renderer</strong> A function that will know what to do when we pass it any single item from your array.</li>
 	</ol>
@@ -81,7 +95,7 @@
 		var my_items = (function(count){
 			var things = [];
 			for (var i = count - 1; i >= 0; i--)
-				things[i] = { id: i, title: i + ' blah', value: Math.sqrt(i+2) };
+				things[i] = { id: i, value: Math.floor(Math.random() * 303) + 384 };
 			return things;
 		})(500);
 
@@ -92,7 +106,7 @@
 
 		// We need a renderer for our items
 		var my_renderer = function(item) {
-			return '<div class="single-thing" data-value="'+item.value+'">'+item.id+' My title is <strong>'+item.title+'</strong></div>';
+			return '<div class="single-thing"><b>&#'+item.value+';</b> My ID is <strong>'+item.id+'</strong></div>';
 		}
 
 
