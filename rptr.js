@@ -26,6 +26,8 @@
 			self.buffer    = [];
 			self.old_range = [];
 
+			self.dummy     = document.createElement('div');
+			self.dummy.className = "rptr-single";
 
 		// this will hold our current state
 		self.visible   = {};
@@ -47,9 +49,19 @@
 			
 			// how tall is the container?
 			params.container_height = self.container.offsetHeight;
+			
+			// add our canvas
+			self.canvas.className = 'rptr-canvas';
+			self.container.appendChild(self.canvas);
 
 			// how tall do we think our items should be?
-			params.item_height = 30;
+			var temp_node = self.dummy.cloneNode();
+			temp_node.style.visibility = 'hidden';
+			temp_node.style.top = '100%';
+			temp_node.innerHTML = self.renderer(self.items[0]);
+			self.canvas.appendChild(temp_node);
+			params.item_height = temp_node.offsetHeight;
+			self.canvas.removeChild(temp_node);
 
 			// how many items can we fit in out container?
 			params.max_items = Math.floor(params.container_height / params. item_height);
@@ -57,14 +69,10 @@
 			// prep the container
 			self.container.style.overflow = 'auto';
 
-			// prep our canvas
-			self.canvas.className = 'rptr-canvas';
+			// resize our canvas
 			self.canvas.style.height = params.count * params.item_height;
 
-			// add our canvas
-			self.container.appendChild(self.canvas);
-
-			// render our items into memory
+			// render our items into strings and stash 'em
 			self._render(self.items, self.renderer);
 
 			// attach our scrolling event listener
@@ -78,10 +86,7 @@
 		// draw the items to our buffer
 		this._render = function(items, renderer) {
 			for (var i = items.length - 1; i >= 0; i--) {
-				self.buffer[i] = {
-					el: renderer(items[i]),
-					visible: false
-				};
+				self.buffer[i] = renderer(items[i]);
 			}
 		};
 
@@ -104,11 +109,10 @@
 		this._cleanup = function(range) {
 			// which items are currently visible?
 			var keys = Object.keys(self.visible);
-			// console.log('cleanup', range.toString(), keys.toString());
 
-			// run through the visible items and 
+			// run through the visible items checking if any are out of range
 			for (var i = keys.length -1; i >=0; i--) {
-				if (keys[i] < range[0] || keys[i] > range[1]) { 
+				if (keys[i] < range[0] || keys[i] > range[1]) {
 					self._remove_item(keys[i]);
 				}
 			}
@@ -118,12 +122,11 @@
 		// add an item
 		this._add_item = function(idx) {
 			// create a DOM node for our item
-			var single_item = document.createElement('div');
-			single_item.className = "rptr-single";
+			var single_item = self.dummy.cloneNode();
 			single_item.style.top = idx * params.item_height;
 
 			// shove our content into the DOM node
-			single_item.innerHTML = self.buffer[idx].el;
+			single_item.innerHTML = self.buffer[idx];
 			
 			// add the DOM node to our canvas
 			self.canvas.appendChild(single_item);
@@ -135,10 +138,7 @@
 
 		// remove an item
 		this._remove_item = function(idx) {
-			if (typeof self.visible[idx] == 'undefined') {
-				console.log('can not find item for removal:', idx, typeof self.visible[idx]);
-				return;
-			}
+			if (typeof self.visible[idx] == 'undefined') return;
 
 			// remove the item from the DOM
 			self.canvas.removeChild(self.visible[idx]);
@@ -148,11 +148,10 @@
 		};
 
 
-		// return the 
+		// return the first and last items worth adding
 		this._get_range = function(position) {
 			var first = Math.max(0, Math.floor( (self.container.scrollTop / params.item_height) - Math.floor(params.max_items * 0.5) ));
-			var last  = first + params.max_items * 2;
-			// console.log("scrollTop:", self.container.scrollTop, "first:", first, "last:", last);
+			var last  = Math.min(params.count, first + params.max_items * 2);
 			return [first, last];
 		};
 
@@ -178,7 +177,7 @@
 
 			// Public methods
 			init: _init,
-			display: _display
+			scroll: _scroll
 		};
 	};
 })(window);
