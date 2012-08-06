@@ -19,14 +19,21 @@
 
 		// Static properties
 		var self = this;
-			self.items     = items;
-			self.container = container;
-			self.renderer  = renderer;
-			self.canvas    = document.createElement('div');
-			self.buffer    = [];
-			self.old_range = [];
+			self.items      = items;
+			self.container  = container;
+			self.renderer   = renderer;
+			self.canvas     = document.createElement('div');
+			self.buffer     = [];
+			self.old_range  = [];
 
-			self.dummy     = document.createElement('div');
+			self.scroll_ctx = { 
+				el: self.container, 
+				prop: 'scrollTop',
+				height: undefined,
+				event: undefined
+			};
+
+			self.dummy      = document.createElement('div');
 			self.dummy.className = "rptr-single";
 
 		// this will hold our current state
@@ -36,7 +43,6 @@
 		// we'll set these params during init
 		var params = {
 			count: undefined,
-			container_height: undefined,
 			item_height: undefined,
 			max_items: undefined
 		};
@@ -46,9 +52,10 @@
 
 			// cache the number of items
 			params.count = self.items.length;
-			
-			// how tall is the container?
-			params.container_height = self.container.offsetHeight;
+		console.log(params.count + ' items');
+
+			// prep the container
+			// self.container.style.overflow = 'auto';
 			
 			// add our canvas
 			self.canvas.className = 'rptr-canvas';
@@ -62,21 +69,36 @@
 			self.canvas.appendChild(temp_node);
 			params.item_height = temp_node.offsetHeight;
 			self.canvas.removeChild(temp_node);
-
-			// how many items can we fit in out container?
-			params.max_items = Math.floor(params.container_height / params. item_height);
-
-			// prep the container
-			self.container.style.overflow = 'auto';
+		console.log('item height: ', params.item_height);
 
 			// resize our canvas
-			self.canvas.style.height = params.count * params.item_height;
+			self.canvas.style.height =  Math.ceil(params.count * params.item_height) + 'px';
+		console.log('canvas height:', self.canvas.style.height, 'should be:', params.count * params.item_height);
+
+			// how tall is the container?
+			if (self.container.offsetHeight < window.innerHeight) {
+				// use the container as the context for scrolling
+				self.scroll_ctx.el     = self.container;
+				self.scroll_ctx.height = self.container.offsetHeight;
+				self.scroll_ctx.prop   = 'scrollTop';
+			}
+			else {
+				// use the window as the context for scrolling
+				self.scroll_ctx.el     = window;
+				self.scroll_ctx.height = window.innerHeight;
+				self.scroll_ctx.prop   = 'scrollY';
+			}
+		console.log('container height:', self.scroll_ctx.height, "window height:", window.innerHeight);
+			
+			// how many items can we fit in out container?
+			params.max_items = Math.floor(self.scroll_ctx.height / params. item_height);
+		console.log('max items:', params.max_items);
 
 			// render our items into strings and stash 'em
 			self._render(self.items, self.renderer);
 
 			// attach our scrolling event listener
-			self.container.addEventListener('scroll', _scroll, false);
+			self.scroll_ctx.event = self.scroll_ctx.el.addEventListener('scroll', _scroll, false);
 
 			// fill 'er up
 			self._scroll();
@@ -123,7 +145,7 @@
 		this._add_item = function(idx) {
 			// create a DOM node for our item
 			var single_item = self.dummy.cloneNode();
-			single_item.style.top = idx * params.item_height;
+			single_item.style.top = idx * params.item_height + 'px';
 
 			// shove our content into the DOM node
 			single_item.innerHTML = self.buffer[idx];
@@ -149,8 +171,13 @@
 
 
 		// return the first and last items worth adding
-		this._get_range = function(position) {
-			var first = Math.max(0, Math.floor( (self.container.scrollTop / params.item_height) - Math.floor(params.max_items * 0.5) ));
+		this._get_range = function() {
+			// console.log(self.scroll_ctx.el[self.scroll_ctx.prop], self.scroll_ctx);
+
+			// make sure we have a scroll position to work with
+			var position = self.scroll_ctx.el[self.scroll_ctx.prop];
+
+			var first = Math.max(0, Math.floor( (position / params.item_height) - Math.floor(params.max_items * 0.5) ));
 			var last  = Math.min(params.count, first + params.max_items * 2);
 			return [first, last];
 		};
@@ -161,10 +188,15 @@
 			var range = self._get_range();
 			// console.log('scrolling', range, self.old_range.toString() == range.toString());
 
+			// if the range hasn't changed we can ignore the event
 			if (self.old_range.toString() == range.toString()) return;
 			
 			self.old_range = range;
+
+			// remove the out of range items
 			self._cleanup(range);
+
+			// add the items that just came into range
 			self._display(range);
 		};
 
