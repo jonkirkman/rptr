@@ -55,7 +55,7 @@
 		console.log(params.count + ' items');
 
 			// prep the container
-			// self.container.style.overflow = 'auto';
+			self.container.style.overflow = 'auto';
 			
 			// add our canvas
 			self.canvas.className = 'rptr-canvas';
