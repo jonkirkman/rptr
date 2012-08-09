@@ -4,17 +4,31 @@ A logic-only repeatable list component aimed at efficiency.
 
 
 ### Three parameters you need:
-1. *Container* A DOM element to hold your soon to be rendered items.
-2. *Data* An array of items you would like rendered.
-3. *Renderer* A function that will know what to do when we pass it any single item from your array.
+1. **Container:** A DOM element to hold your soon to be rendered items.
+2. **Data:** An array of items you would like rendered.
+3. **Renderer:** A function that will know what to do when we pass it any single item from your array.
 
+- - -
+
+### Methods 
+
+#### rptr.init( container, data, renderer )
+Get the ball rolling.
+
+#### rptr.update( data )
+This will update rptr with fresh items. Call this after sorting or filtering your items.
+
+#### rptr.resize()
+Still working on this one.
+
+- - -
 
 ### TODO
 - Clean-up the code
 - Write documentation
 - Build some examples with performance benchmarks
 - Add method for recalculating heights on resize
-- Add method for updating sorting 
+- ~~Add method for updating sorting~~ rptr.update()
 
 
 - - -
