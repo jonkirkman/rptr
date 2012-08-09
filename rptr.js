@@ -25,19 +25,18 @@
 			self.canvas     = document.createElement('div');
 			self.buffer     = [];
 			self.old_range  = [];
+			// this will hold our current state
+			self.visible    = {};
 
-			self.scroll_ctx = { 
-				el: self.container, 
+			self.scroll_ctx = {
+				el: self.container,
 				prop: 'scrollTop',
 				height: undefined,
 				event: undefined
 			};
 
-			self.dummy      = document.createElement('div');
+			self.dummy = document.createElement('div');
 			self.dummy.className = "rptr-single";
-
-		// this will hold our current state
-		self.visible   = {};
 
 
 		// we'll set these params during init
@@ -47,13 +46,21 @@
 			max_items: undefined
 		};
 
-		
-		this._init = function() {
 
+		// refresh the data in case
+		this._prep_data = function() {
 			// cache the number of items
 			params.count = self.items.length;
-		console.log(params.count + ' items');
 
+			// clear the rendered items
+			self.buffer = [];
+			
+			// render our items into strings and stash 'em
+			self._render(self.items, self.renderer);
+		};
+
+
+		this._prep_container = function() {
 			// prep the container
 			self.container.style.overflow = 'auto';
 			
@@ -63,17 +70,18 @@
 
 			// how tall do we think our items should be?
 			var temp_node = self.dummy.cloneNode();
-			temp_node.style.visibility = 'hidden';
-			temp_node.style.top = '100%';
-			temp_node.innerHTML = self.renderer(self.items[0]);
+				temp_node.style.visibility = 'hidden';
+				temp_node.style.top = '100%';
+				temp_node.innerHTML = self.renderer(self.items[0]);
+
 			self.canvas.appendChild(temp_node);
 			params.item_height = temp_node.offsetHeight;
 			self.canvas.removeChild(temp_node);
-		console.log('item height: ', params.item_height);
+			// console.log('item height: ', params.item_height);
 
 			// resize our canvas
 			self.canvas.style.height =  Math.ceil(params.count * params.item_height) + 'px';
-		console.log('canvas height:', self.canvas.style.height, 'should be:', params.count * params.item_height);
+			// console.log('canvas height:', self.canvas.style.height, 'should be:', params.count * params.item_height);
 
 			// how tall is the container?
 			if (self.container.offsetHeight < window.innerHeight) {
@@ -88,20 +96,11 @@
 				self.scroll_ctx.height = window.innerHeight;
 				self.scroll_ctx.prop   = 'scrollY';
 			}
-		console.log('container height:', self.scroll_ctx.height, "window height:", window.innerHeight);
+			// console.log('container height:', self.scroll_ctx.height, "window height:", window.innerHeight);
 			
 			// how many items can we fit in out container?
 			params.max_items = Math.floor(self.scroll_ctx.height / params. item_height);
-		console.log('max items:', params.max_items);
-
-			// render our items into strings and stash 'em
-			self._render(self.items, self.renderer);
-
-			// attach our scrolling event listener
-			self.scroll_ctx.event = self.scroll_ctx.el.addEventListener('scroll', _scroll, false);
-
-			// fill 'er up
-			self._scroll();
+			// console.log('max items:', params.max_items);
 		};
 
 
@@ -177,8 +176,8 @@
 			// make sure we have a scroll position to work with
 			var position = self.scroll_ctx.el[self.scroll_ctx.prop];
 
-			var first = Math.max(0, Math.floor( (position / params.item_height) - Math.floor(params.max_items * 0.5) ));
-			var last  = Math.min(params.count, first + params.max_items * 2);
+			var first = Math.max(0, Math.floor( (position / params.item_height) - Math.floor(params.max_items * 0.5) )),
+				last  = Math.min(params.count, first + params.max_items * 2);
 			return [first, last];
 		};
 
@@ -201,6 +200,43 @@
 		};
 
 
+		this.init = function() {
+			self._prep_data();
+			self._prep_container();
+
+			// attach our scrolling event listener
+			self.scroll_ctx.event = self.scroll_ctx.el.addEventListener('scroll', _scroll, false);
+
+			// fill 'er up
+			self._scroll();
+		};
+
+
+		// deal with new data
+		this.update = function(items) {
+			if (!Array.isArray(items)) {
+				console.log('Oh snap! rptr.update() needs an array.');
+				return false;
+			}
+
+			self.items = items;
+			self._prep_data();
+			self.old_range = [];
+
+			var keys = Object.keys(self.visible);
+			for (var i = keys.length -1; i >=0; i--) {
+				self._remove_item(keys[i]);
+			}
+
+			if (self.scroll_ctx.prop == 'scrollY') {
+				self.scroll_ctx.el.scrollTo(0,0);
+			}
+			else {
+				self.scroll_ctx.el.scrollTop = 0;
+			}
+		};
+
+
 		return {
 			// Public properties
 			params: params,
@@ -208,8 +244,10 @@
 			visible: visible,
 
 			// Public methods
-			init: _init,
-			scroll: _scroll
+			init: init,
+			scroll: _scroll,
+			update: update,
+			resize: _prep_container
 		};
 	};
 })(window);
