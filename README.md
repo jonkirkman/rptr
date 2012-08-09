@@ -1,7 +1,7 @@
-
 # rptr.js
 A logic-only repeatable list component aimed at efficiency.
 
+Try a [demo](http://jonkirkman.github.com/rptr/)
 
 ### Three parameters you need:
 1. **Container:** A DOM element to hold your soon to be rendered items.
