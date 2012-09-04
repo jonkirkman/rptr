@@ -36,7 +36,7 @@
 			};
 
 			self.dummy = document.createElement('div');
-			self.dummy.className = "rptr-single";
+			self.dummy.className = 'rptr-single';
 
 
 		// we'll set these params during init
@@ -104,7 +104,7 @@
 		};
 
 
-		// draw the items to our buffer
+		// draw an item to our buffer
 		this._render = function(items, renderer) {
 			for (var i = items.length - 1; i >= 0; i--) {
 				self.buffer[i] = renderer(items[i]);
@@ -205,7 +205,8 @@
 			self._prep_container();
 
 			// attach our scrolling event listener
-			self.scroll_ctx.event = self.scroll_ctx.el.addEventListener('scroll', _scroll, false);
+			var e = ('ontouchmove' in document.documentElement)? 'ontouchmove' : 'scroll';
+			self.scroll_ctx.event = self.scroll_ctx.el.addEventListener(e, _scroll, false);
 
 			// fill 'er up
 			self._scroll();
@@ -234,7 +235,14 @@
 			else {
 				self.scroll_ctx.el.scrollTop = 0;
 			}
+
+			// fill 'er up
+			self._scroll();
 		};
+
+
+		// Ready, set, go!
+		self.init();
 
 
 		return {
@@ -245,7 +253,6 @@
 
 			// Public methods
 			init: init,
-			scroll: _scroll,
 			update: update,
 			resize: _prep_container
 		};
