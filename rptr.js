@@ -205,8 +205,14 @@
 			self._prep_container();
 
 			// attach our scrolling event listener
-			var e = ('ontouchmove' in document.documentElement)? 'ontouchmove' : 'scroll';
-			self.scroll_ctx.event = self.scroll_ctx.el.addEventListener(e, _scroll, false);
+			var events = [ 'scroll', 'resize' ];
+
+			if ('ontouchmove' in document.documentElement)
+				events.push('touchstart', 'touchmove', 'touchend');
+
+			for (var i = events.length - 1; i >= 0; i--) {
+				self.scroll_ctx.event = self.scroll_ctx.el.addEventListener(events[i], _scroll, false);
+			}
 
 			// fill 'er up
 			self._scroll();
