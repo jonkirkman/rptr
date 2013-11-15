@@ -1,4 +1,3 @@
-
 /**
  * rptr
  * Render repeatitive elements really efficiently
@@ -256,6 +255,7 @@
 			params: params,
 			buffer: buffer,
 			visible: visible,
+			scroll_ctx: scroll_ctx,
 
 			// Public methods
 			init: init,
